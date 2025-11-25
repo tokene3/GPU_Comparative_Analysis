@@ -262,7 +262,7 @@ filtered_df = df[
 # HOME PAGE
 if page == "🏠 Home":
     # Display image only on home page
-    st.image("MyGPU.jpg")
+    st.image("MyGPU.JPG")
     
     st.title("🖥️ GPU Specifications Dashboard")
     st.markdown("---")
@@ -803,4 +803,5 @@ elif page == "📋 Data Explorer":
         for col in categorical_cols:
             if col in filtered_df.columns:
                 st.write(f"**{col}:**")
+
                 st.write(filtered_df[col].value_counts())
