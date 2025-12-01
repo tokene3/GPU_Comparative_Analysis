@@ -1,17 +1,12 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from PIL import Image
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -47,109 +42,109 @@ for col in numerical_cols:
         avg_value = int(df[col].mean())
         df[col].fillna(avg_value, inplace=True)
 
-# Create GPU Performance Score (1-10) based on specifications - FIXED VERSION
+# Create GPU Performance Score (1-100) based on specifications - UPDATED VERSION
 def calculate_gpu_score(row):
-    """Calculate GPU performance score from 1-10 with balanced feature contributions"""
+    """Calculate GPU performance score from 1-100 with balanced feature contributions"""
     score = 0
     
-    # Memory Size contribution (0-2 points) - Reduced from 0-5
+    # Memory Size contribution (0-20 points) - Scaled for 1-100 range
     if row['memSize'] <= 2:
-        score += 0.5
+        score += 5
     elif row['memSize'] <= 4:
-        score += 1.0
+        score += 10
     elif row['memSize'] <= 8:
-        score += 1.5
+        score += 15
     else:
-        score += 2.0
+        score += 20
     
-    # GPU Clock contribution (0-2 points) - Enhanced
+    # GPU Clock contribution (0-20 points) - Enhanced and scaled
     if row['gpuClock'] >= 2500:
-        score += 2.0
+        score += 20
     elif row['gpuClock'] >= 2000:
-        score += 1.5
+        score += 15
     elif row['gpuClock'] >= 1500:
-        score += 1.0
+        score += 10
     elif row['gpuClock'] >= 1000:
-        score += 0.5
+        score += 5
     else:
-        score += 0.25
+        score += 2.5
     
-    # Memory Bus Width contribution (0-2 points) - Enhanced
+    # Memory Bus Width contribution (0-20 points) - Enhanced and scaled
     if row['memBusWidth'] >= 384:
-        score += 2.0
+        score += 20
     elif row['memBusWidth'] >= 256:
-        score += 1.5
+        score += 15
     elif row['memBusWidth'] >= 192:
-        score += 1.0
+        score += 10
     elif row['memBusWidth'] >= 128:
-        score += 0.75
+        score += 7.5
     elif row['memBusWidth'] >= 64:
-        score += 0.5
+        score += 5
     else:
-        score += 0.25
+        score += 2.5
     
-    # Memory Clock contribution (0-1 point) - NEW
+    # Memory Clock contribution (0-10 points) - Scaled
     if 'memClock' in row:
         if row['memClock'] >= 2000:
-            score += 1.0
+            score += 10
         elif row['memClock'] >= 1500:
-            score += 0.75
+            score += 7.5
         elif row['memClock'] >= 1000:
-            score += 0.5
+            score += 5
         else:
-            score += 0.25
+            score += 2.5
     
-    # Unified Shaders contribution (0-2 points) - Enhanced from 0-1
+    # Unified Shaders contribution (0-20 points) - Enhanced and scaled
     if 'unifiedShader' in row:
         if row['unifiedShader'] >= 8000:
-            score += 2.0
+            score += 20
         elif row['unifiedShader'] >= 5000:
-            score += 1.5
+            score += 15
         elif row['unifiedShader'] >= 3000:
-            score += 1.0
+            score += 10
         elif row['unifiedShader'] >= 1500:
-            score += 0.75
+            score += 7.5
         elif row['unifiedShader'] >= 800:
-            score += 0.5
+            score += 5
         else:
-            score += 0.25
+            score += 2.5
     
-    # TMU contribution (0-1 point) - NEW
+    # TMU contribution (0-10 points) - Scaled
     if 'tmu' in row:
         if row['tmu'] >= 200:
-            score += 1.0
+            score += 10
         elif row['tmu'] >= 100:
-            score += 0.75
+            score += 7.5
         elif row['tmu'] >= 50:
-            score += 0.5
+            score += 5
         else:
-            score += 0.25
+            score += 2.5
     
-    # ROP contribution (0-1 point) - NEW
+    # ROP contribution (0-10 points) - Scaled
     if 'rop' in row:
         if row['rop'] >= 80:
-            score += 1.0
+            score += 10
         elif row['rop'] >= 40:
-            score += 0.75
+            score += 7.5
         elif row['rop'] >= 20:
-            score += 0.5
+            score += 5
         else:
-            score += 0.25
+            score += 2.5
     
-    # Release Year bonus (0-1 point) - NEW
+    # Release Year bonus (0-10 points) - Scaled
     if 'releaseYear' in row:
         current_year = 2024
         year_diff = current_year - row['releaseYear']
         if year_diff <= 2:
-            score += 1.0
+            score += 10
         elif year_diff <= 5:
-            score += 0.5
+            score += 5
         elif year_diff <= 8:
-            score += 0.25
+            score += 2.5
     
-    # Normalize to 1-10 scale
-    max_possible_score = 12  # 2 + 2 + 2 + 1 + 2 + 1 + 1 + 1 = 12
-    normalized_score = min(10, max(1, (score / max_possible_score) * 10))
+    # Normalize to 1-100 scale
+    max_possible_score = 120  # 20 + 20 + 20 + 10 + 20 + 10 + 10 + 10 = 120
+    normalized_score = min(100, max(1, (score / max_possible_score) * 100))
     
     return round(normalized_score, 1)
 
@@ -243,13 +238,13 @@ year_range = st.sidebar.slider(
     value=(min_year, max_year)
 )
 
-# GPU Score range
+# GPU Score range - UPDATED TO 1-100
 score_range = st.sidebar.slider(
     "GPU Score Range",
     min_value=1.0,
-    max_value=10.0,
-    value=(1.0, 10.0),
-    step=0.5
+    max_value=100.0,
+    value=(1.0, 100.0),
+    step=1.0
 )
 
 # Apply filters
@@ -261,7 +256,7 @@ filtered_df = df[
 
 # HOME PAGE
 if page == "🏠 Home":
-    # Display image only on home page
+    # Display image only on home page - YOUR ORIGINAL IMAGE
     st.image("MyGPU.JPG")
     
     st.title("🖥️ GPU Specifications Dashboard")
@@ -282,7 +277,7 @@ if page == "🏠 Home":
         - **Overview**: Key metrics and manufacturer distributions
         - **Filters & Analysis**: Detailed visualizations and comparisons
         - **Trends**: Historical performance and technology evolution
-        - **🤖 ML Predictor**: Predict GPU Performance Score (1-10) based on specs
+        - **🤖 ML Predictor**: Predict GPU Performance Score (1-100) based on specs
         - **Data Explorer**: Raw data and detailed statistics
         
         ### 🎯 Key Features:
@@ -299,7 +294,7 @@ if page == "🏠 Home":
         st.metric("Total GPUs", len(filtered_df))
         st.metric("Manufacturers", filtered_df['manufacturer'].nunique())
         st.metric("Years Covered", f"{min_year} - {max_year}")
-        st.metric("Avg GPU Score", f"{filtered_df['gpu_score'].mean():.1f}/10")
+        st.metric("Avg GPU Score", f"{filtered_df['gpu_score'].mean():.1f}/100")
         st.metric("ML Model R² Score", f"{r2:.3f}")
     
     st.markdown("---")
@@ -324,7 +319,7 @@ elif page == "📊 Overview":
         st.metric("Manufacturers", filtered_df['manufacturer'].nunique())
         
     with col3:
-        st.metric("Avg GPU Score", f"{filtered_df['gpu_score'].mean():.1f}/10")
+        st.metric("Avg GPU Score", f"{filtered_df['gpu_score'].mean():.1f}/100")
         
     with col4:
         st.metric("Avg Memory (GB)", f"{filtered_df['memSize'].mean():.1f}")
@@ -355,8 +350,9 @@ elif page == "📊 Overview":
     
     with col2:
         st.subheader("⭐ GPU Score Distribution")
-        score_bins = [1, 3, 5, 7, 9, 10]
-        score_labels = ['1-3 (Low)', '3-5 (Medium)', '5-7 (Good)', '7-9 (High)', '9-10 (Excellent)']
+        # Updated score bins for 1-100 scale
+        score_bins = [1, 20, 40, 60, 80, 100]
+        score_labels = ['1-20 (Low)', '20-40 (Fair)', '40-60 (Good)', '60-80 (High)', '80-100 (Excellent)']
         filtered_df['score_category'] = pd.cut(filtered_df['gpu_score'], bins=score_bins, labels=score_labels)
         score_counts = filtered_df['score_category'].value_counts().sort_index()
         
@@ -404,13 +400,13 @@ elif page == "📊 Overview":
             hover_data=['manufacturer', 'productName'],
             labels={
                 'memSize': 'Memory Size (GB)',
-                'gpu_score': 'GPU Score (1-10)',
+                'gpu_score': 'GPU Score (1-100)',
                 color_by: color_by
             },
             title=f'GPU Score vs Memory Size (colored by {color_by})'
         )
         fig.update_traces(
-            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Memory: %{x} GB<br>Score: %{y}/10<br>" + 
+            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Memory: %{x} GB<br>Score: %{y}/100<br>" + 
                          f"{color_by}: " + "%{marker.color}<extra></extra>"
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -438,7 +434,7 @@ elif page == "🔧 Filters & Analysis":
             color_continuous_scale='viridis'
         )
         fig.update_traces(
-            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Bus Width: %{x} bits<br>Clock: %{y} MHz<br>Score: %{marker.color}/10<extra></extra>"
+            hovertemplate="<b>%{customdata[0]} %{customdata[1]}</b><br>Bus Width: %{x} bits<br>Clock: %{y} MHz<br>Score: %{marker.color}/100<extra></extra>"
         )
         st.plotly_chart(fig, use_container_width=True)
     
@@ -477,7 +473,7 @@ elif page == "🔧 Filters & Analysis":
     with metrics_col3:
         avg_score_by_mfr = filtered_df.groupby('manufacturer')['gpu_score'].mean().round(1)
         for mfr, avg in avg_score_by_mfr.items():
-            st.metric(f"{mfr} Avg Score", f"{avg}/10")
+            st.metric(f"{mfr} Avg Score", f"{avg}/100")
     
     with metrics_col4:
         avg_shader_by_mfr = filtered_df.groupby('manufacturer')['unifiedShader'].mean().round(0)
@@ -696,25 +692,28 @@ elif page == "🤖 ML Predictor":
         
         # Get prediction
         predicted_score = model.predict(input_scaled)[0]
-        predicted_score = max(1, min(10, predicted_score))  # Clamp between 1-10
+        predicted_score = max(1, min(100, predicted_score))  # Clamp between 1-100
         
         # Display results with visual rating
-        st.success(f"**Predicted GPU Performance Score: {predicted_score:.1f}/10**")
+        st.success(f"**Predicted GPU Performance Score: {predicted_score:.1f}/100**")
         
         # Visual score indicator
         st.subheader("📊 Performance Rating")
         
         # Create a visual progress bar for the score
-        score_percentage = (predicted_score / 10) * 100
+        score_percentage = (predicted_score / 100) * 100
         
         # Determine color based on score
-        if predicted_score >= 8:
+        if predicted_score >= 80:
             color = "#00ff00"  # Green
             rating = "Excellent"
-        elif predicted_score >= 6:
+        elif predicted_score >= 60:
+            color = "#90ee90"  # Light Green
+            rating = "Very Good"
+        elif predicted_score >= 40:
             color = "#ffff00"  # Yellow
             rating = "Good"
-        elif predicted_score >= 4:
+        elif predicted_score >= 20:
             color = "#ffa500"  # Orange
             rating = "Average"
         else:
@@ -728,8 +727,8 @@ elif page == "🤖 ML Predictor":
             <div style="background: linear-gradient(90deg, {color} {score_percentage}%, #f0f0f0 {score_percentage}%); 
                         height: 30px; border-radius: 15px; position: relative;">
                 <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); 
-                           font-weight: bold; color: {'white' if predicted_score >= 6 else 'black'};">
-                    {predicted_score:.1f}/10 - {rating}
+                           font-weight: bold; color: {'white' if predicted_score >= 60 else 'black'};">
+                    {predicted_score:.1f}/100 - {rating}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -738,7 +737,7 @@ elif page == "🤖 ML Predictor":
             st.metric("Rating", rating)
         
         with col3:
-            st.metric("Percentile", f"Top {100 - (predicted_score/10)*100:.0f}%")
+            st.metric("Percentile", f"Top {100 - predicted_score:.0f}%")
         
         # Show similar GPUs from dataset
         st.subheader("🔍 Similar GPUs in Dataset")
@@ -803,5 +802,4 @@ elif page == "📋 Data Explorer":
         for col in categorical_cols:
             if col in filtered_df.columns:
                 st.write(f"**{col}:**")
-
                 st.write(filtered_df[col].value_counts())
