@@ -651,7 +651,7 @@ elif page == "🤖 ML Predictor":
     
     with col4:
         rop_count = st.slider("ROP Count", min_value=4, max_value=200, value=32, step=4)
-        release_year = st.slider("Release Year", min_value=2000, max_value=2024, value=2022, step=1)
+        release_year = st.slider("Release Year", min_value=2000, max_value=2025, value=2022, step=1)
     
     # Create input array for prediction - FIXED VERSION
     input_features = {}
@@ -803,3 +803,4 @@ elif page == "📋 Data Explorer":
             if col in filtered_df.columns:
                 st.write(f"**{col}:**")
                 st.write(filtered_df[col].value_counts())
+
