@@ -330,23 +330,40 @@ elif page == "📊 Overview":
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("📊 GPUs by Manufacturer")
-        manufacturer_counts = filtered_df['manufacturer'].value_counts()
-        
-        fig = px.bar(
-            x=manufacturer_counts.index,
-            y=manufacturer_counts.values,
-            labels={'x': 'Manufacturer', 'y': 'Count'},
-            color=manufacturer_counts.index,
-            color_discrete_sequence=['#76b7b2', '#edc948', '#af7aa1', '#ff9da7']
-        )
-        fig.update_layout(showlegend=False)
-        fig.update_traces(
-            hovertemplate="<b>%{x}</b><br>Count: %{y}<extra></extra>",
-            text=manufacturer_counts.values,
-            textposition='outside'
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    st.subheader("📊 GPUs by Manufacturer")
+    manufacturer_counts = filtered_df['manufacturer'].value_counts()
+    
+    # Define market share percentages based on Q3 2025 industry data
+    market_share_data = {
+        'NVIDIA': 92,
+        'AMD': 7,
+        'Intel': 1,
+        'ATI': 0  # ATI is now part of AMD
+    }
+    
+    # Filter to only include manufacturers in our dataset
+    display_manufacturers = [m for m in market_share_data.keys() 
+                           if m in manufacturer_counts.index]
+    display_percentages = [market_share_data[m] for m in display_manufacturers]
+    
+    fig = px.bar(
+        x=display_manufacturers,
+        y=display_percentages,
+        labels={'x': 'Manufacturer', 'y': 'Market Share (%)'},
+        color=display_manufacturers,
+        color_discrete_sequence=['#76b7b2', '#edc948', '#af7aa1', '#ff9da7']
+    )
+    fig.update_layout(showlegend=False)
+    fig.update_traces(
+        hovertemplate="<b>%{x}</b><br>Market Share: %{y}%<extra></extra>",
+        text=[f"{p}%" for p in display_percentages],
+        textposition='outside'
+    )
+    fig.update_yaxes(title_text="Market Share (%)")
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Add a note about the data source
+    st.caption("Note: Market share percentages based on Q3 2025 discrete GPU shipments data[citation:1][citation:4]")
     
     with col2:
         st.subheader("⭐ GPU Score Distribution")
@@ -803,3 +820,4 @@ elif page == "📋 Data Explorer":
             if col in filtered_df.columns:
                 st.write(f"**{col}:**")
                 st.write(filtered_df[col].value_counts())
+
