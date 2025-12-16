@@ -343,7 +343,6 @@ elif page == "📊 Overview":
         fig.update_layout(showlegend=False)
         fig.update_traces(
             hovertemplate="<b>%{x}</b><br>Count: %{y}<extra></extra>",
-            text=manufacturer_counts.values,
             textposition='outside'
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -803,3 +802,4 @@ elif page == "📋 Data Explorer":
             if col in filtered_df.columns:
                 st.write(f"**{col}:**")
                 st.write(filtered_df[col].value_counts())
+
